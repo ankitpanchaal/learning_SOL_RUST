@@ -11,11 +11,11 @@ use solana_sdk::{
 use std::env;
 use std::str::FromStr;
 
-pub fn transfer_sol(
+pub async fn transfer_sol(
     from_keypair: &Keypair,
     to_pubkey_str: &str,
     amount: f64,
-) -> Result<Signature, Box<dyn std::error::Error>> {
+) -> Result<Signature, Box<dyn std::error::Error + Send + Sync>> {
     let rcp_url = env::var("RCP_URL")?;
     let client = RpcClient::new_with_commitment(rcp_url.to_string(), CommitmentConfig::confirmed());
     

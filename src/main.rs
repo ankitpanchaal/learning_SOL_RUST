@@ -1,84 +1,28 @@
 mod utils;
+mod api;
 
-use solana_sdk::signer::Signer;
-use utils::airdrop::airdrop_sol;
-use utils::get_balance::get_balance;
-use utils::transfer::transfer_sol;
-use solana_sdk::signature::read_keypair_file;
-use utils::account::create_new_account;
+use axum::{
+    routing::{get, post},
+    Router,
+};
+use tower_http::cors::CorsLayer;
+use tokio::net::TcpListener;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     dotenv::dotenv().ok();
-    // match create_new_account() {
-    //     Ok((keypair, pubkey)) => {
-    //         println!("Generated new account:");
-    //         println!("Pubkey: {}", pubkey);
-    //         println!("KEYpair: {:?}", keypair);
-    //     }
-    //     Err(e) => {
-    //         println!("Failed to create new account: {}", e);
-    //     }
-    // }
+    
+    let app = Router::new()
+        .route("/api/account/create", get(api::handlers::create_account))
+        .route("/api/balance/:pubkey", get(api::handlers::get_balance))
+        .route("/api/airdrop", post(api::handlers::airdrop))
+        .route("/api/transfer", post(api::handlers::transfer))
+        .layer(CorsLayer::permissive());
 
-
-    // Load first wallet (sender)
-    // let keypair1 = read_keypair_file("./devnet-keypair.json")
-    //     .expect("Failed to load keypair1");
-    // let pubkey1 = keypair1.try_pubkey().expect("Failed to get pubkey from keypair1");
+    let listener = TcpListener::bind("127.0.0.1:3000").await.unwrap();
+    println!("Server running on http://127.0.0.1:3000");
     
-    // // Load second wallet (receiver)
-    // let keypair2 = read_keypair_file("./devnet-keypair2.json")
-    //     .expect("Failed to load keypair2");
-    // let pubkey2 = keypair2.try_pubkey().expect("Failed to get pubkey from keypair2");
-    
-    // println!("=== WALLET 1 (Sender) ===");
-    // println!("Pubkey: {}", pubkey1.to_string());
-    // println!("View account: https://explorer.solana.com/address/{}?cluster=devnet", pubkey1);
-    
-    // println!("\n=== WALLET 2 (Receiver) ===");
-    // println!("Pubkey: {}", pubkey2.to_string());
-    // println!("View account: https://explorer.solana.com/address/{}?cluster=devnet", pubkey2);
-    
-    // Airdrop to wallet 1 first
-    // println!("\n=== AIRDROPPING TO WALLET 1 ===");
-    // match airdrop_sol(&pubkey1.to_string(), 5.0) {
-    //     Ok(signature) => {
-    //         println!("Airdrop completed successfully!");
-    //         println!("Transaction: https://explorer.solana.com/tx/{}?cluster=devnet", signature);
-    //     },
-    //     Err(e) => println!("Airdrop failed: {}", e),
-    // }
-    
-    // println!("\n=== CHECKING BALANCES BEFORE TRANSFER ===");
-    // match get_balance(&pubkey1.to_string()) {
-    //     Ok(balance) => println!("Wallet 1 balance: {} SOL", balance),
-    //     Err(e) => println!("Failed to get wallet 1 balance: {}", e),
-    // }
-    
-    // match get_balance(&pubkey2.to_string()) {
-    //     Ok(balance) => println!("Wallet 2 balance: {} SOL", balance),
-    //     Err(e) => println!("Failed to get wallet 2 balance: {}", e),
-    // }
-    
-    // // Transfer from wallet 1 to wallet 2
-    // println!("\n=== TRANSFERRING 2 SOL FROM WALLET 1 TO WALLET 2 ===");
-    // match transfer_sol(&keypair1, &pubkey2.to_string(), 0.2) {
-    //     Ok(signature) => {
-    //         println!("Transfer completed successfully!");
-    //         println!("Transaction: https://explorer.solana.com/tx/{}?cluster=devnet", signature);
-    //     },
-    //     Err(e) => println!("Transfer failed: {}", e),
-    // }
-    
-    // // Check balances after transfer
-    // println!("\n=== CHECKING BALANCES AFTER TRANSFER ===");
-    // match get_balance(&pubkey1.to_string()) {
-    //     Ok(balance) => println!("Wallet 1 balance: {} SOL", balance),
-    //     Err(e) => println!("Failed to get wallet 1 balance: {}", e),
-    // }
-    
-    // match get_balance(&pubkey2.to_string()) {
-    //     Ok(balance) => println!("Wallet 2 balance: {} SOL", balance),
-    //     Err(e) => println!("Failed to get wallet 2 balance: {}", e),
-    // }
+    axum::serve(listener, app)
+        .await
+        .unwrap();
 }

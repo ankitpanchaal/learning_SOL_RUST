@@ -7,13 +7,12 @@ use solana_sdk::{
 use std::str::FromStr;
 use std::env;
 
+pub async fn get_balance(pubkey_str: &str) -> Result<f64, Box<dyn std::error::Error + Send + Sync>> {
+    let rcp_url = env::var("RCP_URL")?;
+    let client: RpcClient = RpcClient::new_with_commitment(rcp_url.to_string(), CommitmentConfig::confirmed());
 
-pub fn get_balance(pubkey_str: &str) -> Result<f64, Box<dyn std::error::Error>> {
-  let rcp_url = env::var("RCP_URL")?;
-  let client: RpcClient = RpcClient::new_with_commitment(rcp_url.to_string(), CommitmentConfig::confirmed());
+    let pubkey = Pubkey::from_str(pubkey_str)?;
+    let balance_lamports = client.get_balance(&pubkey)?;
 
-  let pubkey = Pubkey::from_str(pubkey_str)?;
-  let balance_lamports = client.get_balance(&pubkey)?;
-
-  return Ok(balance_lamports as f64 / LAMPORTS_PER_SOL as f64)
+    Ok(balance_lamports as f64 / LAMPORTS_PER_SOL as f64)
 }

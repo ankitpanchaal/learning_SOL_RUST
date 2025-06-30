@@ -1,11 +1,15 @@
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
-    commitment_config::CommitmentConfig, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, signature::Signature
+    commitment_config::CommitmentConfig, 
+    native_token::LAMPORTS_PER_SOL, 
+    pubkey::Pubkey, 
+    signature::Signature
 };
 use std::env;
 use std::str::FromStr;
+use tokio::time::{sleep, Duration};
 
-pub fn airdrop_sol(pubkey_str: &str, amount: f64) -> Result<Signature, Box<dyn std::error::Error>> {
+pub async fn airdrop_sol(pubkey_str: &str, amount: f64) -> Result<Signature, Box<dyn std::error::Error + Send + Sync>> {
     let rcp_url = env::var("RCP_URL")?;
 
     let client = RpcClient::new_with_commitment(rcp_url.to_string(), CommitmentConfig::confirmed());
@@ -25,7 +29,7 @@ pub fn airdrop_sol(pubkey_str: &str, amount: f64) -> Result<Signature, Box<dyn s
             println!("Airdrop confirmed!");
             break;
         }
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        sleep(Duration::from_millis(500)).await;
     }
 
     Ok(signature)
